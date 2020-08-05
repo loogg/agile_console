@@ -8,6 +8,8 @@
 
 - 增加一个新的通道非常简单，只需要实现两个回调函数即可。
 
+- 需要使用telnet的可以看我的另一个软件包 [agile_telnet](https://github.com/loogg/agile_telnet)，其最新版本作为该软件包的插件实现。
+
 ### 1.1 目录结构
 
 | 名称 | 说明 |
