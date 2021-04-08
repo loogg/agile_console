@@ -43,12 +43,21 @@ static int agile_colsole_serial_board_init(void)
 }
 INIT_BOARD_EXPORT(agile_colsole_serial_board_init);
 
+static rt_err_t serial_rx_ind(rt_device_t dev, rt_size_t size)
+{
+    agile_console_wakeup();
+
+    return RT_EOK;
+}
+
 static int agile_console_serial_input_init(void)
 {
     if(serial_dev == RT_NULL)
         return -RT_ERROR;
     
     int ret = rt_device_open(serial_dev, RT_DEVICE_FLAG_INT_RX | RT_DEVICE_FLAG_RDWR);
+    if(ret == RT_EOK)
+        rt_device_set_rx_indicate(serial_dev, serial_rx_ind);
 
     return ret;
 }

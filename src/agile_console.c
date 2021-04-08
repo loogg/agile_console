@@ -298,8 +298,6 @@ static void agile_console_input_entry(void* parameter)
 
     while(1)
     {
-        rt_thread_mdelay(10);
-
         rt_slist_for_each(node, &backend_slist)
         {
             struct agile_console_backend *backend = rt_slist_entry(node, struct agile_console_backend, slist);
@@ -324,11 +322,15 @@ static void agile_console_input_entry(void* parameter)
                 }
             }while(read_len > 0);
         }
+
+        rt_sem_take(console.rx_notice, RT_WAITING_FOREVER);
+        rt_sem_control(console.rx_notice, RT_IPC_CMD_RESET, RT_NULL);
     }
 }
 
 static int agile_console_input_init(void)
 {
+    console.rx_notice = rt_sem_create("acon", 0, RT_IPC_FLAG_FIFO);
     rt_thread_t tid = rt_thread_create("acon", agile_console_input_entry, RT_NULL, PKG_AGILE_CONSOLE_THREAD_STACK_SIZE, 
                                        PKG_AGILE_CONSOLE_THREAD_PRIORITY, 100);
     
@@ -352,6 +354,14 @@ int agile_console_backend_register(struct agile_console_backend *backend)
     rt_hw_interrupt_enable(level);
 
     return RT_EOK;
+}
+
+void agile_console_wakeup(void)
+{
+    if(console.rx_notice == RT_NULL)
+        return;
+    
+    rt_sem_release(console.rx_notice);
 }
 
 #endif /* PKG_USING_AGILE_CONSOLE */

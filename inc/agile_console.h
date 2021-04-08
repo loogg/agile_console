@@ -18,9 +18,11 @@ struct agile_console
 {
     struct rt_device parent;
     struct rt_ringbuffer rx_rb;
+    rt_sem_t rx_notice;
 };
 
 int agile_console_backend_register(struct agile_console_backend *backend);
+void agile_console_wakeup(void);
 
 #ifdef __cplusplus
 }
