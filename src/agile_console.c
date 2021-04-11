@@ -7,6 +7,11 @@
     Date:         2020-08-01
     Author:       Longwei Ma
     Modification: 新建版本
+
+ 2. Version:      v1.0.1
+    Date:         2021-04-10
+    Author:       Longwei Ma
+    Modification: input 线程使用信号量，提供 wakeup API
 *************************************************/
 
 #include <rthw.h>
