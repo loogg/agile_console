@@ -48,9 +48,9 @@ static struct agile_console _console_dev = {0};
 static struct rt_thread _thread;
 static uint8_t _thread_stack[PKG_AGILE_CONSOLE_THREAD_STACK_SIZE];
 
+#include <dfs_file.h>
 #if RT_VER_NUM < 0x40100
 #ifdef RT_USING_POSIX
-#include <dfs_posix.h>
 #include <dfs_poll.h>
 #define PKG_AGILE_CONSOLE_USING_POSIX
 
@@ -60,7 +60,6 @@ static uint8_t _thread_stack[PKG_AGILE_CONSOLE_THREAD_STACK_SIZE];
 #endif
 #else
 #if defined(RT_USING_POSIX_STDIO) && defined(RT_USING_POSIX_POLL)
-#include <dfs_posix.h>
 #include <poll.h>
 #define PKG_AGILE_CONSOLE_USING_POSIX
 #endif
