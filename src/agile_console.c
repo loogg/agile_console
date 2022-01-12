@@ -56,18 +56,18 @@ static uint8_t _thread_stack[PKG_AGILE_CONSOLE_THREAD_STACK_SIZE];
 
 #ifdef RT_USING_POSIX_TERMIOS
 #include <posix_termios.h>
-#endif
-#endif
+#endif /* RT_USING_POSIX_TERMIOS */
+#endif /* RT_USING_POSIX */
 #else
 #if defined(RT_USING_POSIX_STDIO) && defined(RT_USING_POSIX_POLL)
 #include <poll.h>
 #define PKG_AGILE_CONSOLE_USING_POSIX
-#endif
+#endif /* defined(RT_USING_POSIX_STDIO) && defined(RT_USING_POSIX_POLL) */
 
 #ifdef RT_USING_POSIX_TERMIOS
 #include <termios.h>
-#endif
-#endif
+#endif /* RT_USING_POSIX_TERMIOS */
+#endif /* RT_VER_NUM < 0x40100 */
 
 #ifdef PKG_AGILE_CONSOLE_USING_POSIX
 static rt_err_t console_fops_rx_ind(rt_device_t dev, rt_size_t size)
@@ -191,7 +191,7 @@ const static struct dfs_file_ops _console_fops =
         RT_NULL, /* getdents */
         console_fops_poll,
 };
-#endif
+#endif /* PKG_AGILE_CONSOLE_USING_POSIX */
 
 static rt_err_t agile_console_open(rt_device_t dev, rt_uint16_t oflag)
 {
