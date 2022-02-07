@@ -399,13 +399,14 @@ static rt_err_t agile_console_control(rt_device_t dev, int cmd, void *args)
  * @brief   Agile Console device 后端接口
  */
 const static struct rt_device_ops _console_ops =
-    {
+{
         RT_NULL,
         agile_console_open,
         RT_NULL,
         agile_console_read,
         agile_console_write,
-        agile_console_control};
+        agile_console_control
+};
 #endif
 
 /**
