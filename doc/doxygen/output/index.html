@@ -1,0 +1,124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.2"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Agile Console: Agile Console</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr style="height: 56px;">
+  <td id="projectalign" style="padding-left: 0.5em;">
+   <div id="projectname">Agile Console<span id="projectnumber">&#160;1.1.0</span>
+   </div>
+   <div id="projectbrief">Simple debugging device Middleware</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 制作者 Doxygen 1.9.2 -->
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',false,false,'search.php','搜索');
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div><div class="header">
+  <div class="headertitle"><div class="title">Agile Console </div></div>
+</div><!--header-->
+<div class="contents">
+<div class="textblock"><p ><a class="anchor" id="md_D__RT_Thread_Learning_rt_thread_bsp_stm32_stm32f407_atk_explorer_packages_agile_console_latest_README"></a> </p>
+<h1><a class="anchor" id="autotoc_md4"></a>
+1、介绍</h1>
+<p >Agile Console 是基于 RT-Thread 的一个简单易用的调试设备中间件。</p>
+<ul>
+<li>接管 <code>console</code> 设备，支持 <code>device</code> 接口和 <code>posix</code> 接口。</li>
+<li>后端实现极其方便，任何接口都可快速接入。</li>
+</ul>
+<p ><b>注意</b> :</p>
+<h2><a class="anchor" id="autotoc_md5"></a>
+1.1 目录结构</h2>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">名称   </th><th class="markdownTableHeadNone">说明    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">example   </td><td class="markdownTableBodyNone">示例    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">figures   </td><td class="markdownTableBodyNone">文档图片    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">inc   </td><td class="markdownTableBodyNone">头文件目录    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">src   </td><td class="markdownTableBodyNone">源代码目录   </td></tr>
+</table>
+<h2><a class="anchor" id="autotoc_md6"></a>
+1.2 许可证</h2>
+<p ><code><a class="el" href="structagile__console.html" title="Agile Console 结构体">agile_console</a></code> package 遵循 LGPLv2.1 许可，详见 <code>LICENSE</code> 文件。</p>
+<h2><a class="anchor" id="autotoc_md7"></a>
+1.3 依赖</h2>
+<ul>
+<li>RT-Thread 3.0+</li>
+</ul>
+<h1><a class="anchor" id="autotoc_md8"></a>
+2、如何打开 agile_console</h1>
+<p >使用 <code><a class="el" href="structagile__console.html" title="Agile Console 结构体">agile_console</a></code> package 需要在 RT-Thread 的包管理器中选择它，具体路径如下：</p>
+<div class="fragment"><div class="line">RT-Thread online packages</div>
+<div class="line">    peripheral libraries and drivers  ---&gt;</div>
+<div class="line">         [*] agile_console: A agile console pachage.  ---&gt;</div>
+<div class="line">            (256) Set agile_console rx buffer size</div>
+<div class="line">            (acon) Set agile_console device name</div>
+<div class="line">            (19)  Set agile_console thread priority</div>
+<div class="line">            (2048) Set agile_console thread stack size</div>
+<div class="line">            [*]   Enable agile_console serial example</div>
+<div class="line">            (uart1) Set serial device name</div>
+<div class="line">                  Version (latest)  ---&gt;</div>
+</div><!-- fragment --><ul>
+<li>**Set <a class="el" href="structagile__console.html" title="Agile Console 结构体">agile_console</a> rx buffer size**：<code><a class="el" href="structagile__console.html" title="Agile Console 结构体">agile_console</a></code>接受环形缓冲区大小</li>
+<li>**Set <a class="el" href="structagile__console.html" title="Agile Console 结构体">agile_console</a> device name**：<code><a class="el" href="structagile__console.html" title="Agile Console 结构体">agile_console</a></code>设备名</li>
+<li>**Set <a class="el" href="structagile__console.html" title="Agile Console 结构体">agile_console</a> thread priority**：<code><a class="el" href="structagile__console.html" title="Agile Console 结构体">agile_console</a></code>线程优先级</li>
+<li>**Set <a class="el" href="structagile__console.html" title="Agile Console 结构体">agile_console</a> thread stack size**：<code><a class="el" href="structagile__console.html" title="Agile Console 结构体">agile_console</a></code>线程堆栈大小</li>
+<li>**Enable <a class="el" href="structagile__console.html" title="Agile Console 结构体">agile_console</a> serial example**：使能串行接口例程</li>
+<li>**Set serial device name**：串行接口设备名</li>
+</ul>
+<p >然后让 RT-Thread 的包管理器自动更新，或者使用 <code>pkgs --update</code> 命令更新包到 BSP 中。</p>
+<h1><a class="anchor" id="autotoc_md9"></a>
+3、使用 agile_console</h1>
+<p >在打开 <code><a class="el" href="structagile__console.html" title="Agile Console 结构体">agile_console</a></code> package 后，当进行 bsp 编译时，它会被加入到 bsp 工程中进行编译。</p>
+<p ><img src="./figures/agile_console_test.gif" alt="agile_console_test" class="inline"/></p>
+<p >如上面动图所示，我注册了串行接口和telnet两个通道，可以看到两个终端都能使用shell。</p>
+<h1><a class="anchor" id="autotoc_md10"></a>
+4、注意事项</h1>
+<ul>
+<li>agile_console使能后是会自动注册为调试设备，是在<code>INIT_BOARD_EXPORT</code>层注册设备并更改为调试设备的。</li>
+<li>配置<code>RT_CONSOLE_DEVICE_NAME</code>为一个不存在的设备名或在<code>rt_hw_board_init</code>中将<code>rt_console_set_device(RT_CONSOLE_DEVICE_NAME);</code>删除。</li>
+</ul>
+<h1><a class="anchor" id="autotoc_md11"></a>
+5、联系方式 &amp; 感谢</h1>
+<ul>
+<li>维护：malongwei</li>
+<li>主页：<a href="https://github.com/loogg/agile_console">https://github.com/loogg/agile_console</a></li>
+<li>邮箱：<a href="#" onclick="location.href='mai'+'lto:'+'254'+'40'+'472'+'13'+'@qq'+'.c'+'om'; return false;">25440<span style="display: none;">.nosp@m.</span>4721<span style="display: none;">.nosp@m.</span>3@qq.<span style="display: none;">.nosp@m.</span>com</a> </li>
+</ul>
+</div></div><!-- PageDoc -->
+</div><!-- contents -->
+<!-- start footer part -->
+<hr class="footer"/><address class="footer"><small>
+制作者&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.2
+</small></address>
+</body>
+</html>

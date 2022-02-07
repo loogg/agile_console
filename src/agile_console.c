@@ -1,19 +1,28 @@
-/*************************************************
- All rights reserved.
- File name:     agile_console.c
- Description:   agile_console源码
- History:
- 1. Version:      v1.0.0
-    Date:         2020-08-01
-    Author:       Longwei Ma
-    Modification: 新建版本
+/**
+ * @file    agile_console.c
+ * @brief   Agile Console 软件包源文件
+ * @author  马龙伟 (2544047213@qq.com)
+ * @version 1.1.0
+ * @date    2022-01-22
+ *
+ @verbatim
+    使用：
 
- 2. Version:      v1.0.1
-    Date:         2021-04-10
-    Author:       Longwei Ma
-    Modification: input 线程使用信号量，提供 wakeup API
-*************************************************/
+    1. 定义后端变量
+    2. 实现后端的 `output`、`read` 和 `control` 接口
+    3. 调用 `agile_console_backend_register` 注册后端
+    4. 后端收到数据时调用 `agile_console_wakeup` 唤醒接收线程
 
+ @endverbatim
+ *
+ * @attention
+ *
+ * <h2><center>&copy; Copyright (c) 2022 Ma Longwei.
+ * All rights reserved.</center></h2>
+ *
+ */
+
+#include <agile_console.h>
 #include <rthw.h>
 
 #ifdef PKG_USING_AGILE_CONSOLE
@@ -22,36 +31,15 @@
 #error "Not support."
 #endif
 
-#include <agile_console.h>
-
-#ifndef PKG_AGILE_CONSOLE_RX_BUFFER_SIZE
-#define PKG_AGILE_CONSOLE_RX_BUFFER_SIZE 256
-#endif
-
-#ifndef PKG_AGILE_CONSOLE_DEVICE_NAME
-#define PKG_AGILE_CONSOLE_DEVICE_NAME "acon"
-#endif
-
-#ifndef PKG_AGILE_CONSOLE_THREAD_PRIORITY
-#define PKG_AGILE_CONSOLE_THREAD_PRIORITY 19
-#endif
-
-#ifndef PKG_AGILE_CONSOLE_THREAD_STACK_SIZE
-#define PKG_AGILE_CONSOLE_THREAD_STACK_SIZE 2048
-#endif
-
-ALIGN(RT_ALIGN_SIZE)
-static uint8_t _rx_rb_buf[PKG_AGILE_CONSOLE_RX_BUFFER_SIZE];
-static rt_slist_t _slist_head = RT_SLIST_OBJECT_INIT(_slist_head);
-static struct agile_console _console_dev = {0};
-
-static struct rt_thread _thread;
-static uint8_t _thread_stack[PKG_AGILE_CONSOLE_THREAD_STACK_SIZE];
-
-#include <dfs_file.h>
+/** @defgroup AGILE_CONSOLE_Posix_Definition Agile Console Posix Definition
+ * @{
+ */
 #if RT_VER_NUM < 0x40100
 #ifdef RT_USING_POSIX
+#include <dfs_file.h>
 #include <dfs_poll.h>
+
+/** Agile Console Posix 支持 */
 #define PKG_AGILE_CONSOLE_USING_POSIX
 
 #ifdef RT_USING_POSIX_TERMIOS
@@ -60,7 +48,10 @@ static uint8_t _thread_stack[PKG_AGILE_CONSOLE_THREAD_STACK_SIZE];
 #endif /* RT_USING_POSIX */
 #else
 #if defined(RT_USING_POSIX_STDIO) && defined(RT_USING_POSIX_POLL)
+#include <dfs_file.h>
 #include <poll.h>
+
+/** Agile Console Posix 支持 */
 #define PKG_AGILE_CONSOLE_USING_POSIX
 #endif /* defined(RT_USING_POSIX_STDIO) && defined(RT_USING_POSIX_POLL) */
 
@@ -68,17 +59,72 @@ static uint8_t _thread_stack[PKG_AGILE_CONSOLE_THREAD_STACK_SIZE];
 #include <termios.h>
 #endif /* RT_USING_POSIX_TERMIOS */
 #endif /* RT_VER_NUM < 0x40100 */
+/**
+ * @}
+ */
+
+/** @defgroup AGILE_CONSOLE_Configuration Agile Console Configuration
+ * @{
+ */
+#ifndef PKG_AGILE_CONSOLE_RX_BUFFER_SIZE
+#define PKG_AGILE_CONSOLE_RX_BUFFER_SIZE 1024 /**< Agile Console 接收 ringbuffer 大小 */
+#endif
+
+#ifndef PKG_AGILE_CONSOLE_DEVICE_NAME
+#define PKG_AGILE_CONSOLE_DEVICE_NAME "tty" /**< Agile Console 设备名 */
+#endif
+
+#ifndef PKG_AGILE_CONSOLE_THREAD_PRIORITY
+#define PKG_AGILE_CONSOLE_THREAD_PRIORITY 9 /**< Agile Console 线程优先级 */
+#endif
+
+#ifndef PKG_AGILE_CONSOLE_THREAD_STACK_SIZE
+#define PKG_AGILE_CONSOLE_THREAD_STACK_SIZE 2048 /**< Agile Console 线程堆栈 */
+#endif
+/**
+ * @}
+ */
+
+/** @defgroup AGILE_CONSOLE_Private_Variables Agile Console Private Variables
+ * @{
+ */
+ALIGN(RT_ALIGN_SIZE)
+static uint8_t _rx_rb_buf[PKG_AGILE_CONSOLE_RX_BUFFER_SIZE];       /**< Agile Console 接收 ringbuffer 缓冲区 */
+static rt_slist_t _slist_head = RT_SLIST_OBJECT_INIT(_slist_head); /**< Agile Console 后端链表头节点 */
+static struct agile_console _console_dev = {0};                    /**< Agile Console 设备 */
+
+static struct rt_thread _thread;                                   /**< Agile Console 线程控制块 */
+static uint8_t _thread_stack[PKG_AGILE_CONSOLE_THREAD_STACK_SIZE]; /**< Agile Console 线程堆栈 */
+/**
+ * @}
+ */
+
+/** @defgroup AGILE_CONSOLE_Posix_Support Agile Console Posix Support
+ * @{
+ */
 
 #ifdef PKG_AGILE_CONSOLE_USING_POSIX
-static rt_err_t console_fops_rx_ind(rt_device_t dev, rt_size_t size)
+
+/**
+ * @brief   Agile Console posix 接收事务处理
+ *          唤醒 posix 接收阻塞任务
+ * @param   dev 设备对象
+ * @param   size 数据长度
+ * @return  RT_EOK:成功
+ */
+static rt_err_t agile_console_fops_rx_ind(rt_device_t dev, rt_size_t size)
 {
     rt_wqueue_wakeup(&(dev->wait_queue), (void *)POLLIN);
 
     return RT_EOK;
 }
 
-/* fops for console */
-static int console_fops_open(struct dfs_fd *fd)
+/**
+ * @brief   Posix 打开 Agile Console 设备
+ * @param   fd dfs 句柄
+ * @return  0:成功; 其他:异常
+ */
+static int agile_console_fops_open(struct dfs_fd *fd)
 {
     rt_err_t ret = 0;
     rt_uint16_t flags = 0;
@@ -87,11 +133,11 @@ static int console_fops_open(struct dfs_fd *fd)
     device = (rt_device_t)fd->data;
     RT_ASSERT(device != RT_NULL);
 
-    flags = RT_DEVICE_FLAG_RDWR;
+    flags = RT_DEVICE_OFLAG_RDWR;
 
     if ((fd->flags & O_ACCMODE) != O_WRONLY) {
         rt_base_t level = rt_hw_interrupt_disable();
-        rt_device_set_rx_indicate(device, console_fops_rx_ind);
+        rt_device_set_rx_indicate(device, agile_console_fops_rx_ind);
         rt_hw_interrupt_enable(level);
     }
 
@@ -102,7 +148,12 @@ static int console_fops_open(struct dfs_fd *fd)
     return ret;
 }
 
-static int console_fops_close(struct dfs_fd *fd)
+/**
+ * @brief   Posix 关闭 Agile Console 设备
+ * @param   fd dfs 句柄
+ * @return  0:成功
+ */
+static int agile_console_fops_close(struct dfs_fd *fd)
 {
     rt_device_t device;
 
@@ -117,14 +168,29 @@ static int console_fops_close(struct dfs_fd *fd)
     return 0;
 }
 
-static int console_fops_ioctl(struct dfs_fd *fd, int cmd, void *args)
+/**
+ * @brief   Posix 设置 Agile Console 设备
+ * @param   fd dfs 句柄
+ * @param   cmd 命令
+ * @param   args 命令参数
+ * @return  0:成功; 其他:异常
+ */
+static int agile_console_fops_ioctl(struct dfs_fd *fd, int cmd, void *args)
 {
     rt_device_t device = (rt_device_t)fd->data;
 
     return rt_device_control(device, cmd, args);
 }
 
-static int console_fops_read(struct dfs_fd *fd, void *buf, size_t count)
+/**
+ * @brief   Posix 读取 Agile Console 设备数据
+ * @param   fd dfs 句柄
+ * @param   buf 存放数据区
+ * @param   count 数据长度
+ * @return  读取数据长度
+ *          <0:异常
+ */
+static int agile_console_fops_read(struct dfs_fd *fd, void *buf, size_t count)
 {
     int size = 0;
     rt_device_t device;
@@ -146,7 +212,14 @@ static int console_fops_read(struct dfs_fd *fd, void *buf, size_t count)
     return size;
 }
 
-static int console_fops_write(struct dfs_fd *fd, const void *buf, size_t count)
+/**
+ * @brief   Agile Console posix 发送数据
+ * @param   fd dfs 句柄
+ * @param   buf 发送数据区
+ * @param   count 数据长度
+ * @return  发送成功数据长度
+ */
+static int agile_console_fops_write(struct dfs_fd *fd, const void *buf, size_t count)
 {
     rt_device_t device;
 
@@ -154,7 +227,14 @@ static int console_fops_write(struct dfs_fd *fd, const void *buf, size_t count)
     return rt_device_write(device, -1, buf, count);
 }
 
-static int console_fops_poll(struct dfs_fd *fd, struct rt_pollreq *req)
+/**
+ * @brief   Agile Console posix poll 处理
+ *          对 select 提供支持
+ * @param   fd dfs 句柄
+ * @param   req poll 句柄
+ * @return  可用 Poll 事件
+ */
+static int agile_console_fops_poll(struct dfs_fd *fd, struct rt_pollreq *req)
 {
     int mask = 0;
     int flags = 0;
@@ -179,20 +259,38 @@ static int console_fops_poll(struct dfs_fd *fd, struct rt_pollreq *req)
     return mask;
 }
 
+/**
+ * @brief   Agile Console dfs 后端接口
+ */
 const static struct dfs_file_ops _console_fops =
     {
-        console_fops_open,
-        console_fops_close,
-        console_fops_ioctl,
-        console_fops_read,
-        console_fops_write,
+        agile_console_fops_open,
+        agile_console_fops_close,
+        agile_console_fops_ioctl,
+        agile_console_fops_read,
+        agile_console_fops_write,
         RT_NULL, /* flush */
         RT_NULL, /* lseek */
         RT_NULL, /* getdents */
-        console_fops_poll,
+        agile_console_fops_poll,
 };
+
 #endif /* PKG_AGILE_CONSOLE_USING_POSIX */
 
+/**
+ * @}
+ */
+
+/** @defgroup AGILE_CONSOLE_Device_Support Agile Console Device Support
+ * @{
+ */
+
+/**
+ * @brief   打开 Agile Console 设备
+ * @param   dev 设备对象
+ * @param   oflag 打开标志
+ * @return  RT_EOK:成功
+ */
 static rt_err_t agile_console_open(rt_device_t dev, rt_uint16_t oflag)
 {
     rt_uint16_t stream_flag = 0;
@@ -210,6 +308,14 @@ static rt_err_t agile_console_open(rt_device_t dev, rt_uint16_t oflag)
     return RT_EOK;
 }
 
+/**
+ * @brief   读取 Agile Console 设备数据
+ * @param   dev 设备对象
+ * @param   pos 数据偏移
+ * @param   buffer 存放数据区
+ * @param   size 数据长度
+ * @return  读取数据长度
+ */
 static rt_size_t agile_console_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
 {
     if (size == 0)
@@ -224,6 +330,15 @@ static rt_size_t agile_console_read(rt_device_t dev, rt_off_t pos, void *buffer,
     return result;
 }
 
+/**
+ * @brief   Agile Console 发送数据
+ *          调用所有后端 output 接口
+ * @param   dev 设备对象
+ * @param   pos 数据偏移
+ * @param   buffer 发送数据区
+ * @param   size 数据长度
+ * @return  发送成功数据长度
+ */
 static rt_size_t agile_console_write(rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
 {
     if (size == 0)
@@ -242,6 +357,14 @@ static rt_size_t agile_console_write(rt_device_t dev, rt_off_t pos, const void *
     return size;
 }
 
+/**
+ * @brief   Agile Console 设备设置
+ *          调用所有后端 control 接口
+ * @param   dev 设备对象
+ * @param   cmd 命令
+ * @param   args 命令参数
+ * @return  RT_EOK:成功; 其他:异常
+ */
 static rt_err_t agile_console_control(rt_device_t dev, int cmd, void *args)
 {
     rt_err_t result = RT_EOK;
@@ -272,6 +395,9 @@ static rt_err_t agile_console_control(rt_device_t dev, int cmd, void *args)
 }
 
 #ifdef RT_USING_DEVICE_OPS
+/**
+ * @brief   Agile Console device 后端接口
+ */
 const static struct rt_device_ops _console_ops =
     {
         RT_NULL,
@@ -282,6 +408,19 @@ const static struct rt_device_ops _console_ops =
         agile_console_control};
 #endif
 
+/**
+ * @}
+ */
+
+/** @defgroup AGILE_CONSOLE_Init Agile Console Init
+ * @{
+ */
+
+/**
+ * @brief   Agile Console 初始化
+ *          接管 console 设备
+ * @return  RT_EOK:成功
+ */
 static int agile_console_board_init(void)
 {
     rt_memset(&_console_dev, 0, sizeof(struct agile_console));
@@ -321,6 +460,11 @@ static int agile_console_board_init(void)
 }
 INIT_BOARD_EXPORT(agile_console_board_init);
 
+/**
+ * @brief   Agile Console 接收线程
+ *          从所有后端读取数据
+ * @param   parameter 线程参数
+ */
 static void agile_console_input_entry(void *parameter)
 {
     uint8_t read_buf[100];
@@ -356,6 +500,10 @@ static void agile_console_input_entry(void *parameter)
     }
 }
 
+/**
+ * @brief   Agile Console 接收初始化
+ * @return  RT_EOK:成功
+ */
 static int agile_console_input_init(void)
 {
     rt_sem_init(&_console_dev.rx_notice, "acon", 0, RT_IPC_FLAG_FIFO);
@@ -377,6 +525,19 @@ static int agile_console_input_init(void)
 }
 INIT_ENV_EXPORT(agile_console_input_init);
 
+/**
+ * @}
+ */
+
+/** @defgroup AGILE_CONSOLE_Exported_Functions Agile Console Exported Functions
+ * @{
+ */
+
+/**
+ * @brief   Agile Console 注册后端接口
+ * @param   backend 后端接口
+ * @return  RT_EOK:成功
+ */
 int agile_console_backend_register(struct agile_console_backend *backend)
 {
     rt_base_t level;
@@ -392,6 +553,9 @@ int agile_console_backend_register(struct agile_console_backend *backend)
     return RT_EOK;
 }
 
+/**
+ * @brief   唤醒 Agile Console 接收线程
+ */
 void agile_console_wakeup(void)
 {
     if (!_console_dev.rx_init_ok)
@@ -399,5 +563,9 @@ void agile_console_wakeup(void)
 
     rt_sem_release(&_console_dev.rx_notice);
 }
+
+/**
+ * @}
+ */
 
 #endif /* PKG_USING_AGILE_CONSOLE */

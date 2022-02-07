@@ -1,74 +1,130 @@
-# agile_console
+# Agile Console
 
 ## 1、介绍
 
-- `agile_console` 是基于RT-Thread实现的灵活的console设备，支持多个通道输入和输出。
+Agile Console 是基于 RT-Thread 的一个简单易用的调试设备中间件。
 
-- 支持device接口和POSIX接口。
+- 接管 `console` 设备，支持 `device` 接口和 `posix` 接口。
 
-- 增加一个新的通道非常简单，只需要实现两个回调函数即可。
+- 后端实现极其方便，任何接口都可快速接入。
 
-- 需要使用telnet的可以看我的另一个软件包 [agile_telnet](https://github.com/loogg/agile_telnet)，其最新版本作为该软件包的插件实现。
+ **注意** : 由于 Agile Console 会直接接管 `console` 设备，建议将 `RT-Thread`  `Kernel` 中的 `RT_CONSOLE_DEVICE_NAME` 配置为一个不存在的设备。
 
-### 1.1 目录结构
+Agile Console 目前支持的后端接口如下：
+
+- 串口后端
+
+- USB CDC 后端
+
+  使用到 [tinyusb](https://github.com/RT-Thread-packages/tinyusb)。
+
+- Telnet 后端
+
+  使用到 [agile_telnet](https://github.com/loogg/agile_telnet)。
+
+### 1.1、目录结构
 
 | 名称 | 说明 |
 | ---- | ---- |
-| example | 示例 |
-| figures | 文档图片 |
-| inc  | 头文件目录 |
-| src  | 源代码目录 |
+| doc | 文档 |
+| examples | 示例 |
+| figures | 素材 |
+| inc  | 头文件 |
+| src  | 源代码 |
 
-### 1.2 许可证
+### 1.2、许可证
 
-`agile_console` package 遵循 LGPLv2.1 许可，详见 `LICENSE` 文件。
+Agile Console package 遵循 LGPLv2.1 许可，详见 `LICENSE` 文件。
 
-### 1.3 依赖
+### 1.3、依赖
 
-- RT-Thread 3.0+
+- RT-Thread 4.0.3
 
-## 2、如何打开 agile_console
+- RT-Thread 4.0.5 ~ master
 
-使用 `agile_console` package 需要在 RT-Thread 的包管理器中选择它，具体路径如下：
+## 2、使用 Agile Console
 
+- 帮助文档请查看 [doc/doxygen/Agile_Console.chm](./doc/doxygen/Agile_Console.chm)
+
+- 使用 Agile Console package 需要在 RT-Thread 的包管理器中选择它，具体路径如下：
+
+  ```C
+  RT-Thread online packages
+      peripheral libraries and drivers  --->
+           [*] agile_console: Simple debugging device Middleware.  --->
+              (1024) Set agile_console rx buffer size
+              (tty) Set agile_console device name
+              (9)  Set agile_console thread priority
+              (2048) Set agile_console thread stack size
+              [*]   Enable agile_console serial example
+              (uart1) Set serial device name
+              [*]   Enable telnet plugin
+              [*]   Enable tinyusb plugin (RT-Thread 版本 >= 4.1.0)
+                    Version (latest)  --->
+  ```
+
+  - **Set agile_console rx buffer size** ：Agile Console 接受环形缓冲区大小
+
+  - **Set agile_console device name** ：Agile Console 设备名
+
+  - **Set agile_console thread priority** ：Agile Console 线程优先级
+
+  - **Set agile_console thread stack size** ：Agile Console 线程堆栈大小
+
+  - **Enable agile_console serial example** ：使能串口例程
+
+  - **Set serial device name** ：串口设备名
+
+  - **Enable telnet plugin** ：使能 telnet 后端插件
+
+    使能后会选中 [agile_telnet](https://github.com/loogg/agile_telnet) 软件包。
+
+  - **Enable tinyusb plugin** ：使能 tinyusb 后端插件
+
+    RT-Thread 版本 >= 4.1.0 才有该选项。使能后会选中 [tinyusb](https://github.com/RT-Thread-packages/tinyusb) 软件包。
+
+## 3、新的后端接入 Agile Console
+
+可以参考 [examples](./examples) 文件夹中的例子和 [agile_telnet](https://github.com/loogg/agile_telnet) 软件包。
+
+Agile Console 提供了后端接口结构体定义：
+
+```C
+/**
+ * @brief   Agile Console 后端接口结构体
+ */
+struct agile_console_backend {
+    void (*output)(rt_device_t dev, const uint8_t *buf, int len); /**< 向后端输出数据接口 */
+    int (*read)(rt_device_t dev, uint8_t *buf, int len);          /**< 从后端读取数据接口 */
+    int (*control)(rt_device_t dev, int cmd, void *arg);          /**< 对后端进行设置接口 */
+    rt_slist_t slist;                                             /**< 单向链表节点 */
+};
 ```
-RT-Thread online packages
-    peripheral libraries and drivers  --->
-         [*] agile_console: A agile console pachage.  --->
-            (256) Set agile_console rx buffer size
-            (acon) Set agile_console device name
-            (19)  Set agile_console thread priority
-            (2048) Set agile_console thread stack size
-            [*]   Enable agile_console serial example
-            (uart1) Set serial device name
-                  Version (latest)  --->
-```
 
-- **Set agile_console rx buffer size**：`agile_console`接受环形缓冲区大小
-- **Set agile_console device name**：`agile_console`设备名
-- **Set agile_console thread priority**：`agile_console`线程优先级
-- **Set agile_console thread stack size**：`agile_console`线程堆栈大小
-- **Enable agile_console serial example**：使能串行接口例程
-- **Set serial device name**：串行接口设备名
+实现一个新的后端并接入 Agile Console 的步骤如下：
 
-然后让 RT-Thread 的包管理器自动更新，或者使用 `pkgs --update` 命令更新包到 BSP 中。
+1. 定义后端变量
 
-## 3、使用 agile_console
+2. 实现后端的 `output`、`read` 和 `control` 接口
 
-在打开 `agile_console` package 后，当进行 bsp 编译时，它会被加入到 bsp 工程中进行编译。
+    - `output` 接口
 
-![agile_console_test](./figures/agile_console_test.gif)
+      实现时 **不能调用** **任何可能导致线程挂起的 API**。建议将数据放入 `ringbuffer` 并创建线程异步发送。
 
-如上面动图所示，我注册了串行接口和telnet两个通道，可以看到两个终端都能使用shell。
+    - `read` 接口
 
-## 4、注意事项
+      除了保护资源而使用的互斥锁外，其他引起阻塞的 API 不建议调用。已有的数据存放到数据区后立马返回。
 
-- agile_console使能后是会自动注册为调试设备，是在`INIT_BOARD_EXPORT`层注册设备并更改为调试设备的。
-- 配置`RT_CONSOLE_DEVICE_NAME`为一个不存在的设备名或在`rt_hw_board_init`中将`rt_console_set_device(RT_CONSOLE_DEVICE_NAME);`删除。
+    - `control` 接口
 
+      该接口用作控制后端。除 `TCFLSH` 命令，其他命令均会调用该接口。可不实现。
 
-## 5、联系方式 & 感谢
+3. 调用 `agile_console_backend_register` 注册后端
 
-- 维护：malongwei
+4. 后端收到数据时调用 `agile_console_wakeup` 唤醒接收线程
+
+## 4、联系方式 & 感谢
+
+- 维护：马龙伟
 - 主页：<https://github.com/loogg/agile_console>
 - 邮箱：<2544047213@qq.com>
