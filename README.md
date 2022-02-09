@@ -93,9 +93,19 @@ Agile Console package 遵循 LGPLv2.1 许可，详见 `LICENSE` 文件。
 
 - 多后端演示
 
+  演示使用开发板：正点原子探索者
+
   - 串口、Telnet 和 USB CDC 同时交互演示：
 
     ![whole](./figures/whole.gif)
+
+  - USB CDC Ymodem 传输文件
+
+    CDC Fifo 接收大小修改为 1024
+
+    CDC Fifo 发送大小修改为 2048
+
+    ![usb_file](./figures/usb_file.gif)
 
 ## 3、新的后端接入 Agile Console
 
