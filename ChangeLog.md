@@ -9,3 +9,5 @@
 * 增加 `control` 接口
 
 * 增加 Doxygen 注释，生成文档
+
+* 增加 tinyusb 后端例子
