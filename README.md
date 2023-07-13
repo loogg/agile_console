@@ -48,7 +48,7 @@ Agile Console package 遵循 LGPLv2.1 许可，详见 `LICENSE` 文件。
 
 - 使用 Agile Console package 需要在 RT-Thread 的包管理器中选择它，具体路径如下：
 
-  ```C
+  ```c
   RT-Thread online packages
       peripheral libraries and drivers  --->
            [*] agile_console: Simple debugging device Middleware.  --->
@@ -115,7 +115,7 @@ Agile Console package 遵循 LGPLv2.1 许可，详见 `LICENSE` 文件。
 
 - Agile Console 提供了后端接口结构体定义：
 
-  ```C
+  ```c
   /**
    * @brief   Agile Console 后端接口结构体
    */
