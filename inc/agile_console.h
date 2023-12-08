@@ -27,6 +27,20 @@ extern "C" {
  * @{
  */
 
+/** @addtogroup AGILE_CONSOLE_Exported_Macros
+ * @{
+ */
+#ifndef AGILE_CONSOLE_MEM_ALIGN
+#ifdef rt_align
+#define AGILE_CONSOLE_MEM_ALIGN          rt_align(RT_ALIGN_SIZE)
+#else
+#define AGILE_CONSOLE_MEM_ALIGN          ALIGN(RT_ALIGN_SIZE)
+#endif
+#endif
+/**
+ * @}
+ */
+
 /**
  * @brief   Agile Console 后端接口结构体
  */
@@ -59,6 +73,7 @@ void agile_console_wakeup(void);
 /**
  * @}
  */
+
 
 #ifdef __cplusplus
 }
