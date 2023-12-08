@@ -88,7 +88,7 @@
 /** @defgroup AGILE_CONSOLE_Private_Variables Agile Console Private Variables
  * @{
  */
-ALIGN(RT_ALIGN_SIZE)
+AGILE_CONSOLE_MEM_ALIGN
 static uint8_t _rx_rb_buf[PKG_AGILE_CONSOLE_RX_BUFFER_SIZE];       /**< Agile Console 接收 ringbuffer 缓冲区 */
 static rt_slist_t _slist_head = RT_SLIST_OBJECT_INIT(_slist_head); /**< Agile Console 后端链表头节点 */
 static struct agile_console _console_dev = {0};                    /**< Agile Console 设备 */
