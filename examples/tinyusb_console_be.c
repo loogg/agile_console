@@ -8,7 +8,7 @@
 #include <agile_console.h>
 #include <tusb.h>
 
-ALIGN(RT_ALIGN_SIZE)
+AGILE_CONSOLE_MEM_ALIGN
 static struct rt_semaphore _sem;
 static struct rt_timer _timer;
 static struct rt_ringbuffer _rb;
@@ -83,7 +83,7 @@ static void con_usb_output_entry(void *parameter)
     while (1) {
         do {
             level = rt_hw_interrupt_disable();
-            send_len = rt_ringbuffer_peak(&_rb, &send_ptr);
+            send_len = rt_ringbuffer_peek(&_rb, &send_ptr);
             rt_hw_interrupt_enable(level);
 
             if (send_len > 0) {
