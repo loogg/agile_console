@@ -88,7 +88,11 @@
 /** @defgroup AGILE_CONSOLE_Private_Variables Agile Console Private Variables
  * @{
  */
+#if RT_VER_NUM >= 0x50000
+rt_align(RT_ALIGN_SIZE)
+#else
 ALIGN(RT_ALIGN_SIZE)
+#endif
 static uint8_t _rx_rb_buf[PKG_AGILE_CONSOLE_RX_BUFFER_SIZE];       /**< Agile Console 接收 ringbuffer 缓冲区 */
 static rt_slist_t _slist_head = RT_SLIST_OBJECT_INIT(_slist_head); /**< Agile Console 后端链表头节点 */
 static struct agile_console _console_dev = {0};                    /**< Agile Console 设备 */
@@ -124,13 +128,21 @@ static rt_err_t agile_console_fops_rx_ind(rt_device_t dev, rt_size_t size)
  * @param   fd dfs 句柄
  * @return  0:成功; 其他:异常
  */
+#if RT_VER_NUM >= 0x50001
+static int agile_console_fops_open(struct dfs_file *fd)
+#else
 static int agile_console_fops_open(struct dfs_fd *fd)
+#endif
 {
     rt_err_t ret = 0;
     rt_uint16_t flags = 0;
     rt_device_t device;
 
+#if RT_VER_NUM >= 0x50000
+    device = (rt_device_t)fd->vnode->data;
+#else
     device = (rt_device_t)fd->data;
+#endif
     RT_ASSERT(device != RT_NULL);
 
     flags = RT_DEVICE_OFLAG_RDWR;
@@ -153,11 +165,19 @@ static int agile_console_fops_open(struct dfs_fd *fd)
  * @param   fd dfs 句柄
  * @return  0:成功
  */
+#if RT_VER_NUM >= 0x50001
+static int agile_console_fops_close(struct dfs_file *fd)
+#else
 static int agile_console_fops_close(struct dfs_fd *fd)
+#endif
 {
     rt_device_t device;
 
+#if RT_VER_NUM >= 0x50000
+    device = (rt_device_t)fd->vnode->data;
+#else
     device = (rt_device_t)fd->data;
+#endif
 
     rt_base_t level = rt_hw_interrupt_disable();
     rt_device_set_rx_indicate(device, RT_NULL);
@@ -175,9 +195,17 @@ static int agile_console_fops_close(struct dfs_fd *fd)
  * @param   args 命令参数
  * @return  0:成功; 其他:异常
  */
+#if RT_VER_NUM >= 0x50001
+static int agile_console_fops_ioctl(struct dfs_file *fd, int cmd, void *args)
+#else
 static int agile_console_fops_ioctl(struct dfs_fd *fd, int cmd, void *args)
+#endif
 {
+#if RT_VER_NUM >= 0x50000
+    rt_device_t device = (rt_device_t)fd->vnode->data;
+#else
     rt_device_t device = (rt_device_t)fd->data;
+#endif
 
     return rt_device_control(device, cmd, args);
 }
@@ -190,12 +218,32 @@ static int agile_console_fops_ioctl(struct dfs_fd *fd, int cmd, void *args)
  * @return  读取数据长度
  *          <0:异常
  */
+#if RT_VER_NUM >= 0x50001
+#if RT_VER_NUM == 0x50001
+#ifdef RT_USING_DFS_V2
+static int agile_console_fops_read(struct dfs_file *fd, void *buf, size_t count, off_t *pos)
+#else
+static int agile_console_fops_read(struct dfs_file *fd, void *buf, size_t count)
+#endif
+#else
+#ifdef RT_USING_DFS_V2
+static ssize_t agile_console_fops_read(struct dfs_file *fd, void *buf, size_t count, off_t *pos)
+#else
+static ssize_t agile_console_fops_read(struct dfs_file *fd, void *buf, size_t count)
+#endif
+#endif
+#else
 static int agile_console_fops_read(struct dfs_fd *fd, void *buf, size_t count)
+#endif
 {
     int size = 0;
     rt_device_t device;
 
+#if RT_VER_NUM >= 0x50000
+    device = (rt_device_t)fd->vnode->data;
+#else
     device = (rt_device_t)fd->data;
+#endif
 
     do {
         size = rt_device_read(device, -1, buf, count);
@@ -219,11 +267,31 @@ static int agile_console_fops_read(struct dfs_fd *fd, void *buf, size_t count)
  * @param   count 数据长度
  * @return  发送成功数据长度
  */
+#if RT_VER_NUM >= 0x50001
+#if RT_VER_NUM == 0x50001
+#ifdef RT_USING_DFS_V2
+static int agile_console_fops_write(struct dfs_file *fd, const void *buf, size_t count, off_t *pos)
+#else
+static int agile_console_fops_write(struct dfs_file *fd, const void *buf, size_t count)
+#endif
+#else
+#ifdef RT_USING_DFS_V2
+static ssize_t agile_console_fops_write(struct dfs_file *fd, const void *buf, size_t count, off_t *pos)
+#else
+static ssize_t agile_console_fops_write(struct dfs_file *fd, const void *buf, size_t count)
+#endif
+#endif
+#else
 static int agile_console_fops_write(struct dfs_fd *fd, const void *buf, size_t count)
+#endif
 {
     rt_device_t device;
 
+#if RT_VER_NUM >= 0x50000
+    device = (rt_device_t)fd->vnode->data;
+#else
     device = (rt_device_t)fd->data;
+#endif
     return rt_device_write(device, -1, buf, count);
 }
 
@@ -234,13 +302,21 @@ static int agile_console_fops_write(struct dfs_fd *fd, const void *buf, size_t c
  * @param   req poll 句柄
  * @return  可用 Poll 事件
  */
+#if RT_VER_NUM >= 0x50001
+static int agile_console_fops_poll(struct dfs_file *fd, struct rt_pollreq *req)
+#else
 static int agile_console_fops_poll(struct dfs_fd *fd, struct rt_pollreq *req)
+#endif
 {
     int mask = 0;
     int flags = 0;
     rt_device_t device;
 
+#if RT_VER_NUM >= 0x50000
+    device = (rt_device_t)fd->vnode->data;
+#else
     device = (rt_device_t)fd->data;
+#endif
     RT_ASSERT(device != RT_NULL);
 
     /* only support POLLIN */
@@ -316,7 +392,11 @@ static rt_err_t agile_console_open(rt_device_t dev, rt_uint16_t oflag)
  * @param   size 数据长度
  * @return  读取数据长度
  */
+#if RT_VER_NUM >= 0x50000
+static rt_ssize_t agile_console_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
+#else
 static rt_size_t agile_console_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
+#endif
 {
     if (size == 0)
         return 0;
@@ -339,7 +419,11 @@ static rt_size_t agile_console_read(rt_device_t dev, rt_off_t pos, void *buffer,
  * @param   size 数据长度
  * @return  发送成功数据长度
  */
+#if RT_VER_NUM >= 0x50000
+static rt_ssize_t agile_console_write(rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
+#else
 static rt_size_t agile_console_write(rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
+#endif
 {
     if (size == 0)
         return 0;
