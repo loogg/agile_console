@@ -340,15 +340,12 @@ static int agile_console_fops_poll(struct dfs_fd *fd, struct rt_pollreq *req)
  */
 const static struct dfs_file_ops _console_fops =
     {
-        agile_console_fops_open,
-        agile_console_fops_close,
-        agile_console_fops_ioctl,
-        agile_console_fops_read,
-        agile_console_fops_write,
-        RT_NULL, /* flush */
-        RT_NULL, /* lseek */
-        RT_NULL, /* getdents */
-        agile_console_fops_poll,
+        .open  = agile_console_fops_open,
+        .close = agile_console_fops_close,
+        .ioctl = agile_console_fops_ioctl,
+        .read  = agile_console_fops_read,
+        .write = agile_console_fops_write,
+        .poll  = agile_console_fops_poll,
 };
 
 #endif /* PKG_AGILE_CONSOLE_USING_POSIX */
